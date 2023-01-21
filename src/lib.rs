@@ -39,8 +39,9 @@ use rp2040_hal::pio::{
 pub mod dma;
 
 /// Clock divider for the PIO SM
-const PIO_CLK_DIV_INT: u16 = 1;
-const PIO_CLK_DIV_FRAQ: u8 = 255;
+const PIO_CLK_DIV_INT: u16 = 2;
+const PIO_CLK_DIV_FRAQ: u8 = 192;
+// const PIO_CLK_DIV_FRAQ: u8 = 255;
 
 /// Framebuffer size in bytes
 #[doc(hidden)]
@@ -155,6 +156,7 @@ pub struct DisplayPins {
     pub addrb: DynPin,
     pub addrc: DynPin,
     pub addrd: DynPin,
+    pub addre: DynPin,
     pub lat: DynPin,
     pub oe: DynPin,
 }
@@ -245,6 +247,9 @@ where
         pins.addrd
             .try_into_mode(DynPinMode::Function(PE::DYN))
             .unwrap();
+        pins.addre
+            .try_into_mode(DynPinMode::Function(PE::DYN))
+            .unwrap();
         pins.lat
             .try_into_mode(DynPinMode::Function(PE::DYN))
             .unwrap();
@@ -317,7 +322,7 @@ where
             );
             let installed = pio_block.install(&program_data.program).unwrap();
             let (mut sm, _, mut tx) = PIOBuilder::from_program(installed)
-                .out_pins(pins.addra.id().num, 4)
+                .out_pins(pins.addra.id().num, 5)
                 .side_set_pin_base(pins.lat.id().num)
                 .clock_divisor_fixed_point(PIO_CLK_DIV_INT, PIO_CLK_DIV_FRAQ)
                 .build(row_sm);
@@ -326,6 +331,7 @@ where
                 (pins.addrb.id().num, PinDir::Output),
                 (pins.addrc.id().num, PinDir::Output),
                 (pins.addrd.id().num, PinDir::Output),
+                (pins.addre.id().num, PinDir::Output),
                 (pins.lat.id().num, PinDir::Output),
             ]);
             // Configure the height of the screen
@@ -558,8 +564,8 @@ where
     /// Note that the coordinates are 0-indexed.
     pub fn set_pixel<C: RgbColor>(&mut self, x: usize, y: usize, color: C) {
         // invert the screen
-        let x = W - 1 - x;
-        let y = H - 1 - y;
+        // let x = W - 1 - x;
+        // let y = H - 1 - y;
         // Half of the screen
         let h = y > (H / 2) - 1;
         let shift = if h { 3 } else { 0 };
